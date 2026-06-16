@@ -148,6 +148,43 @@ def delete_student():
     # part miera
     # part aliah
 
+# ─── REPORTS MODULE ───────────────────────────────
+def show_reports():
+    print_header("REPORTS & SUMMARY")
+    conn = sqlite3.connect(DB_NAME)
+    cursor = conn.cursor()
+
+    stats = [
+        ("Total Students",  "SELECT COUNT(*) FROM student WHERE status='active'"),
+        ("Total Rooms",     "SELECT COUNT(*) FROM room"),
+        ("Available Rooms", "SELECT COUNT(*) FROM room WHERE status='available'"),
+        ("Full Rooms",      "SELECT COUNT(*) FROM room WHERE status='full'"),
+        ("Unpaid Fines",    "SELECT COUNT(*) FROM fine WHERE payment_status='unpaid'"),
+        ("Open Complaints", "SELECT COUNT(*) FROM complaint WHERE status='open'"),
+    ]
+
+    print("\n  --- SYSTEM SUMMARY ---\n")
+    for label, query in stats:
+        cursor.execute(query)
+        count = cursor.fetchone()[0]
+        print(f"  {label:<25}: {count}")
+
+    print("\n  --- RECENT UNPAID FINES ---\n")
+    cursor.execute("""SELECT fine_id, student_id, violation_type, amount, due_date
+                      FROM fine WHERE payment_status='unpaid' ORDER BY due_date LIMIT 5""")
+    rows = cursor.fetchall()
+    if rows:
+        print(f"  {'ID':<5} {'St.ID':<7} {'Violation':<25} {'RM':<8} {'Due'}")
+        print("  " + "-" * 55)
+        for r in rows:
+            print(f"  {r[0]:<5} {r[1]:<7} {r[2]:<25} {r[3]:<8} {r[4]}")
+    else:
+        print("  No unpaid fines.")
+
+    conn.close()
+    input("\nPress Enter to continue...")
+
+
 # ─── MAIN ─────────────────────────────────────────
 def main():
     from database import initialize_db
